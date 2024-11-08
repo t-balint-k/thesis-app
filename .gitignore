@@ -1,0 +1,6 @@
+.vs/
+thesis_application.*/
+*.sln
+
+thesis_application/bin/
+thesis_application/obj/

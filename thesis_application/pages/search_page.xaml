@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="thesis_application.search_page"
+             Title="Kereső"
+             >
+
+    <!-- SEARCH PAGE-->
+
+    <StackLayout
+        Margin="12"
+        >
+        <StackLayout Orientation="Horizontal">
+            <Entry
+                x:Name="search_bar"
+                Placeholder="Keresés..."
+                HorizontalOptions="FillAndExpand"
+            />
+            <Button WidthRequest="48"
+                x:Name="filters"
+                Command="{Binding click_filter}"
+            />
+        </StackLayout>
+
+        <ScrollView>
+            <StackLayout
+                x:Name="result_list"
+                >
+            </StackLayout>
+        </ScrollView>
+    </StackLayout>
+</ContentPage>
