@@ -4,7 +4,6 @@ using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Xamarin.Forms;
@@ -95,17 +94,23 @@ namespace thesis_application
             // api call for real time instrument price (real time as in, real time response from the endpoint; their service shows a delayed price by design)
             try
             {
-                string response = "";
-                HttpClient http = new HttpClient();
+                (bool success, string response) = await utility.send_request($"https://api.twelvedata.com/price?{instrument.construct_api_arguments()}&apikey={App.api_key}");
 
-                response = await http.GetStringAsync(utility.call_price_api(instrument));
+                // fail
+                if (!success)
+                {
+                    has_error(response);
+                    return;
+                }
+
+                // success
                 string actual_price = (string)JObject.Parse(response)["price"];
-
                 instrument_price = double.Parse(actual_price);
             }
             catch
             {
-                instrument_price = -1;
+                has_error("A szerver hibás adatokat küldött!");
+                return;
             }
 
             // tranzacion history
@@ -323,6 +328,9 @@ namespace thesis_application
                     break;
             }
 
+            // has errors
+            if (current.Length == 0) return;
+
             // math
             int min =     (int)Math.Floor(current.Select(x => x.Value).Min());
             int max =     (int)Math.Ceiling(current.Select(x => x.Value).Max());
@@ -347,13 +355,32 @@ namespace thesis_application
 
             async Task<ChartEntry[]> get_data(string interval, int size)
             {
-                // http request
-                HttpClient http = new HttpClient();
-                string debug = utility.call_time_api(instrument, interval, size);
-                string response = await http.GetStringAsync(debug);
+                JObject[] time_series;
 
-                // extracting the datapoints
-                JObject[] time_series = JObject.Parse(response)["values"].ToObject<JObject[]>();
+                // http request
+                try
+                {
+                    (bool success, string response) = await utility.send_request($"https://api.twelvedata.com/time_series?{instrument.construct_api_arguments()}&interval={interval}&outputsize={size}&apikey={App.api_key}");
+
+                    // fail
+                    if (!success)
+                    {
+                        has_error(response);
+                        return new ChartEntry[0];
+                    }
+
+                    // success
+                    error.IsVisible = false;
+
+                    // extracting the datapoints
+                    time_series = JObject.Parse(response)["values"].ToObject<JObject[]>();
+                }
+
+                catch
+                {
+                    has_error("A szerver hibás adatokat küldött!");
+                    return new ChartEntry[0];
+                }
 
                 // parsing response data
                 List<ChartEntry> entries = new List<ChartEntry>();
@@ -408,6 +435,20 @@ namespace thesis_application
                 // done
                 return entries.OrderBy(x => x.Label).ToArray();
             }
+        }
+
+        void has_error(string reason)
+        {
+            // label
+            error.Text = reason;
+            error.IsVisible = true;
+
+            // chart
+            chart_view.Chart = new LineChart();
+            foreach (Button n in step_buttons) n.IsVisible = false;
+
+            //
+            refresh_container.IsRefreshing = false;
         }
     }
 }

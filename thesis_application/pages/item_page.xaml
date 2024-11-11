@@ -30,6 +30,12 @@
                     <Label Text="Lépésköz:" />
 
                 </FlexLayout>
+                <!-- error -->
+                <Label
+                    x:Name="error"
+                    TextColor="Red"
+                    IsVisible="false"
+                    />
                 <!-- details -->
                 <StackLayout
                     Margin="0,0,0,0"

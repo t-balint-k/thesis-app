@@ -8,11 +8,44 @@
     <!-- LOGIN PAGE -->
 
     <StackLayout Padding="24">
-        <Label Text="Email cím" TextColor="Black" FontSize="24" FontAttributes="Bold"/>
-        <Entry Placeholder="janos@pelda.hu" Keyboard="Email"/>
-        <Label Text="Jelszó" TextColor="Black" FontSize="24" FontAttributes="Bold"/>
-        <Entry Placeholder="xxxxxx" IsPassword="True"/>
-        <Button Text="Belépés" BackgroundColor="Wheat" CornerRadius="24" Command="{Binding click_login}"/>
-        <Button Text="Regisztráció" BackgroundColor="White" CornerRadius="24" Command="{Binding click_signup}"/>
+        <Label
+            Text="Email cím"
+            TextColor="Black"
+            FontSize="24"
+            FontAttributes="Bold"
+            />
+        <Entry
+            x:Name="entry_email"
+            Text="asd@asd.hu"
+            Placeholder=""
+            Keyboard="Email"
+            />
+        <Label
+            Text="Jelszó"
+            TextColor="Black"
+            FontSize="24"
+            FontAttributes="Bold"
+            />
+        <Entry
+            x:Name="entry_password"
+            Text="asd"
+            Placeholder=""
+            IsPassword="True"
+            />
+        <Button
+            Text="Belépés"
+            BackgroundColor="Wheat"
+            CornerRadius="24"
+            Command="{Binding click_login}"/>
+        <Button
+            Text="Regisztráció"
+            BackgroundColor="White"
+            CornerRadius="24"
+            Command="{Binding click_signup}"/>
+        <Label
+            x:Name="error"
+            TextColor="Red"
+            IsVisible="false"
+            />
     </StackLayout>
 </ContentPage>

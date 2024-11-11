@@ -7,13 +7,52 @@
 
     <!-- SIGN UP PAGE -->
 
-    <StackLayout Padding="24">
-        <Label Text="Email cím" TextColor="Black" FontSize="24" FontAttributes="Bold"/>
-        <Entry Placeholder="janos@pelda.hu" Keyboard="Email"/>
-        <Label Text="Jelszó" TextColor="Black" FontSize="24" FontAttributes="Bold"/>
-        <Entry Placeholder="xxxxxx" IsPassword="True"/>
-        <Label Text="Jelszó újra" TextColor="Black" FontSize="24" FontAttributes="Bold"/>
-        <Entry Placeholder="xxxxxx" IsPassword="True"/>
-        <Button Text="Regisztráció" BackgroundColor="Wheat" CornerRadius="24" Command="{Binding click_signup}"/>
+    <StackLayout
+        Padding="24"
+        >
+        <Label
+            Text="Email cím"
+            TextColor="Black"
+            FontSize="24"
+            FontAttributes="Bold"
+            />
+        <Entry
+            x:Name="entry_email"
+            Placeholder="janos@pelda.hu"
+            Keyboard="Email"
+            />
+        <Label
+            Text="Jelszó"
+            TextColor="Black"
+            FontSize="24"
+            FontAttributes="Bold"
+            />
+        <Entry
+            x:Name="entry_password"
+            Placeholder="*****"
+            IsPassword="True"
+            />
+        <Label
+            Text="Jelszó újra"
+            TextColor="Black"
+            FontSize="24"
+            FontAttributes="Bold"
+            />
+        <Entry
+            x:Name="entry_repass"
+            Placeholder="*****"
+            IsPassword="True"
+            />
+        <Button
+            Text="Regisztráció"
+            BackgroundColor="Wheat"
+            CornerRadius="24"
+            Command="{Binding click_signup}"
+            />
+        <Label
+            x:Name="error"
+            TextColor="Red"
+            IsVisible="false"
+            />
     </StackLayout>
 </ContentPage>

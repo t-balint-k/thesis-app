@@ -2,7 +2,6 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
-using System.Net.Http;
 using System.Windows.Input;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
@@ -22,6 +21,7 @@ namespace thesis_application
         {
             InitializeComponent();
 
+            // binding
             click_search = new Command(go_search);
             click_sync = new Command(go_sync);
             click_item = new Command(go_item);
@@ -29,6 +29,7 @@ namespace thesis_application
 
             BindingContext = this;
 
+            // init
             utility.database_init();
             do_refresh();
         }
@@ -66,17 +67,26 @@ namespace thesis_application
                 (string name, string dispose) = n.itself.construct_identifiers();
 
                 // the api call for the real time price
-                string response = "";
                 try
                 {
-                    HttpClient http = new HttpClient();
-                    response = await http.GetStringAsync(utility.call_price_api(n.itself));
+                    (bool success, string response) = await utility.send_request($"https://api.twelvedata.com/price?{n.itself.construct_api_arguments()}&apikey={App.api_key}");
+
+                    // fail
+                    if (!success)
+                    {
+                        has_error(response);
+                        break;
+                    }
+
+                    // success
                     string actual_price = (string)JObject.Parse(response)["price"];
                     n.price = double.Parse(actual_price);
                 }
+
                 catch
                 {
-                    response = "error";
+                    has_error("A szerver hibás adatokat küldött!");
+                    break;
                 }
 
                 double d = Math.Truncate((((n.sum * n.price) / n.exp) - 1) * 10000) / 10000;
@@ -140,6 +150,11 @@ namespace thesis_application
             }
             
             // done
+            refresh_container.IsRefreshing = false;
+        }
+
+        void has_error(string reason)
+        {
             refresh_container.IsRefreshing = false;
         }
 

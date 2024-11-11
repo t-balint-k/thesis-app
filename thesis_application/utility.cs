@@ -1,15 +1,19 @@
 ﻿using SQLite;
 using System;
 using System.IO;
+using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
+using System.Web;
 using Xamarin.Essentials;
+using System.Net;
+using Plugin.Connectivity;
 
 namespace thesis_application
 {
     public static class utility
     {
-        // API key
-        private const string api_key = "0dd18a256cb649e48b71f593c5dd963f";
-
         // database connection
         public static SQLiteConnection db_context;
 
@@ -24,18 +28,6 @@ namespace thesis_application
                 n.status = "hiba történt";
                 db_context.Update(n);
             }
-        }
-
-        // api call constructor for real time price data
-        public static string call_price_api(security s)
-        {
-            return $"https://api.twelvedata.com/price?{s.construct_api_arguments()}&apikey={api_key}";
-        }
-
-        // api call constructor for time series
-        public static string call_time_api(security s, string interval, int size)
-        {
-            return $"https://api.twelvedata.com/time_series?{s.construct_api_arguments()}&interval={interval}&outputsize={size}&apikey={api_key}";
         }
 
         // security types hungarian translation
@@ -86,6 +78,94 @@ namespace thesis_application
                 case security_type.commodity: return db_context.Table<commodity>().Where(x => x.id == fk).FirstOrDefault();
             }
             return new stock();
+        }
+
+        // reching the webserver
+        public static async Task<(bool, string)> reach_server(string endpoint, string email, string password)
+        {
+            // email
+            email = HttpUtility.UrlEncode(email);
+            
+            // password
+            using (SHA256 sha = SHA256.Create())
+            {
+                byte[] bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
+                StringBuilder builder = new StringBuilder();
+                foreach (byte n in bytes) builder.Append(n.ToString("x2"));
+                password = builder.ToString();
+            }
+
+            // call
+            (bool success, string response) = await send_request($"http://172.213.140.243:5000/v1/{endpoint}?email={email}&password={password}");
+
+            // done
+            return (success, response);
+        }
+
+        // sending an asyncronous call
+        public static async Task<(bool, string)> send_request(string fullurl)
+        {
+            // check internet connectivity
+            if (Connectivity.NetworkAccess != NetworkAccess.Internet)
+            {
+                return (false, "Nincs internet kapcsolat!");
+            }
+
+            // check server reachability
+            /*
+            var available = await CrossConnectivity.Current.IsRemoteReachable(baseurl, 5000, 8000);
+            if (!available)
+            {
+                return (false, "A szerver jelenleg nem érhető el!");
+            }
+            */
+
+            // call
+            HttpStatusCode status;
+            string response;
+
+            try
+            {
+                HttpClient http = new HttpClient() { Timeout = new TimeSpan(0, 0, 8) };
+                HttpResponseMessage msg = await http.GetAsync(fullurl);
+
+                status = msg.StatusCode;
+                response = await msg.Content.ReadAsStringAsync();
+            }
+
+            // generic error
+            catch
+            {
+                return (false, "Ismeretlen hiba történt!");
+            }
+
+            // unsuccessful
+            switch (status)
+            {
+                // timeout
+                case HttpStatusCode.RequestTimeout:
+                    return (false, "A szerver nem válaszolt.");
+
+                // internal server error
+                case HttpStatusCode.InternalServerError:
+                    return (false, "Belső szerver hiba!");
+
+                // bad request
+                case HttpStatusCode.BadRequest:
+                    return (false, "A mezők kitöltése kötelező!");
+
+                // not found
+                case HttpStatusCode.NotFound:
+                    return (false, "NOTFOUND");
+
+                // OK
+                case HttpStatusCode.OK:
+                    return (true, response);
+
+                // everything else -> unknown error
+                default:
+                    return (false, $"Ismeretlen hiba történt: HTTP {status}");
+            }
         }
     }
 }
