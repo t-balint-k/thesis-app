@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ThesisApplication.Pages.PortfolioCreatePage"
+             Title="Új portfolió"
+             >
+
+    <!-- CREATE PORTFOLIO PAGE -->
+
+    <StackLayout
+        Padding="24"
+        >
+        <Label
+            Text="Név"
+            TextColor="Black"
+            FontSize="20"
+            FontAttributes="Bold"
+            />
+        <Entry
+            x:Name="nameEntry"
+            Text=""
+            Placeholder=""
+            />
+        <Label
+            Text="Keret"
+            TextColor="Black"
+            FontSize="20"
+            FontAttributes="Bold"
+            />
+        <Entry
+            x:Name="poolEntry"
+            Text=""
+            Placeholder=""
+            Keyboard="Numeric"
+            />
+        <Label
+            Text="Valuta"
+            TextColor="Black"
+            FontSize="20"
+            FontAttributes="Bold"
+            />
+        <Picker
+            x:Name="currencyPicker"
+            />
+        <Button
+            Text="Mehet"
+            BackgroundColor="Wheat"
+            CornerRadius="24"
+            Command="{Binding ClickCreate}"
+            x:Name="createButton"
+            />
+        <Label
+            x:Name="errorLabel"
+            TextColor="Red"
+            IsVisible="false"
+            />
+    </StackLayout>
+
+</ContentPage>

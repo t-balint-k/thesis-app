@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ThesisApplication.Pages.LoginPage"
+             Title="Bejelentkezés"
+             >
+
+    <!-- LOGIN PAGE -->
+
+    <RefreshView
+        x:Name="RefreshContainer"
+        Command="{Binding Refresh}"
+        >
+        <ScrollView>
+            <StackLayout Padding="24">
+                <Label
+                    Text="Email cím"
+                    TextColor="Black"
+                    FontSize="24"
+                    FontAttributes="Bold"
+                    />
+                <Entry
+                    x:Name="emailEntry"
+                    Text=""
+                    Placeholder=""
+                    Keyboard="Email"
+                    />
+                <Label
+                    Text="Jelszó"
+                    TextColor="Black"
+                    FontSize="24"
+                    FontAttributes="Bold"
+                    />
+                <Entry
+                    x:Name="passwordEntry"
+                    Text=""
+                    Placeholder=""
+                    IsPassword="True"
+                    />
+                <Button
+                    Text="Belépés"
+                    BackgroundColor="Wheat"
+                    CornerRadius="24"
+                    Command="{Binding ClickLogin}"
+                    x:Name="LoginButton"
+                    />
+                <Button
+                    Text="Regisztráció"
+                    BackgroundColor="Transparent"
+                    CornerRadius="24"
+                    Command="{Binding ClickSignup}"
+                    x:Name="SignupButton"
+                    />
+                <Label
+                    x:Name="errorLabel"
+                    TextColor="Red"
+                    IsVisible="false"
+                    />
+                <Label
+                    x:Name="signupLabel"
+                    TextColor="Green"
+                    IsVisible="false"
+                    Text="Sikeres regisztráció!"
+                    FontSize="18"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    BackgroundColor="PaleGreen"
+                    Padding="12"
+                    />
+            </StackLayout>
+        </ScrollView>
+    </RefreshView>
+
+</ContentPage>

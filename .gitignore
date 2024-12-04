@@ -1,6 +1,6 @@
 .vs/
-thesis_application.*/
+.git/
 *.sln
 
-thesis_application/bin/
-thesis_application/obj/
+ThesisApplication*/bin/
+ThesisApplication*/obj/

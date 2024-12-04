@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ThesisApplication.Pages.SignupPage"
+             Title="Regisztráció"
+             >
+
+    <!-- SIGN UP PAGE -->
+
+    <StackLayout
+        Padding="24"
+        >
+        <Label
+            Text="Email cím"
+            TextColor="Black"
+            FontSize="24"
+            FontAttributes="Bold"
+            />
+        <Entry
+            x:Name="emailEntry"
+            Placeholder="janos@pelda.hu"
+            Keyboard="Email"
+            />
+        <Label
+            Text="Jelszó"
+            TextColor="Black"
+            FontSize="24"
+            FontAttributes="Bold"
+            />
+        <Entry
+            x:Name="passwordEntry"
+            Placeholder="*****"
+            IsPassword="True"
+            />
+        <Label
+            Text="Jelszó újra"
+            TextColor="Black"
+            FontSize="24"
+            FontAttributes="Bold"
+            />
+        <Entry
+            x:Name="repassEntry"
+            Placeholder="*****"
+            IsPassword="True"
+            />
+        <Button
+            Text="Regisztráció"
+            BackgroundColor="Wheat"
+            CornerRadius="24"
+            Command="{Binding ClickSignup}"
+            />
+        <Label
+            x:Name="errorLabel"
+            TextColor="Red"
+            IsVisible="false"
+            />
+    </StackLayout>
+
+</ContentPage>

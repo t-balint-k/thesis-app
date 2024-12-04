@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ThesisApplication.Pages.PortfolioViewPage"
+             Title="név"
+             >
+
+    <!-- PORTFOLIO PAGE -->
+
+    <AbsoluteLayout
+        x:Name="AbsoluteList"
+        >
+        <!-- main container (refresh) -->
+        <RefreshView
+            x:Name="RefreshContainer"
+            Command="{Binding Refresh}"
+            AbsoluteLayout.LayoutBounds="0, 0, 1, 1"
+            AbsoluteLayout.LayoutFlags="All"
+            Padding="12"
+            >
+            <ScrollView>
+                <StackLayout>
+                    <!-- chart -->
+
+                    <Label
+                    x:Name="errorLabel"
+                    TextColor="Red"
+                    IsVisible="false"
+                    />
+                    <!-- portfolio elements -->
+                    <StackLayout
+                        x:Name="InstrumentList"
+                        >
+
+                    </StackLayout>
+                </StackLayout>
+            </ScrollView>
+        </RefreshView>
+        <!-- floating buttons -->
+        <Frame
+            BackgroundColor="Wheat"
+            WidthRequest="72" HeightRequest="72" CornerRadius="36" Padding="0"
+            AbsoluteLayout.LayoutBounds="1, 1, AutoSize, AutoSize"
+            AbsoluteLayout.LayoutFlags="PositionProportional"
+            Margin="24"
+            >
+            <Label
+                Text="+" TextColor="White"
+                FontAttributes="Bold" FontSize="48"
+                HorizontalOptions="Center" VerticalOptions="Center"
+                />
+            <Frame.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding ClickAdd}" />
+            </Frame.GestureRecognizers>
+        </Frame>
+    </AbsoluteLayout>
+
+</ContentPage>

@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ThesisApplication.Pages.InstrumentViewPage"
+             xmlns:microcharts="clr-namespace:Microcharts.Forms;assembly=Microcharts.Forms"
+             Title="Instrumentum"
+             >
+
+    <!-- ITEM PAGE -->
+
+    <RefreshView
+        x:Name="RefreshContainer"
+        Command="{Binding Refresh}"
+        >
+        <ScrollView>
+            <StackLayout
+                Padding="16"
+                >
+                <!-- chart -->
+                <microcharts:ChartView
+                    x:Name="chartView"
+                    HeightRequest="256"
+                    />
+                <FlexLayout
+                    x:Name="StepSizes"
+                    Direction="Row"
+                    JustifyContent="SpaceBetween"
+                    Padding="16,0,16,0"
+                    >
+                    <Label Text="Lépésköz:" />
+
+                </FlexLayout>
+                <!-- error -->
+                <Label
+                    x:Name="error"
+                    TextColor="Red"
+                    IsVisible="false"
+                    />
+                <!-- details -->
+                <StackLayout
+                    Margin="0,12,0,0"
+                    >
+                    <Label
+                        x:Name="companyLabel"
+                        FontSize="24"
+                        TextColor="DimGray"
+                        />
+                    <Label
+                        x:Name="exchangeLabel"
+                        FontSize="18"
+                        TextColor="DimGray"
+                        />
+                    <StackLayout
+                        Orientation="Horizontal"
+                        >
+                        <Label
+                            x:Name="priceLabel"
+                            TextColor="Black"
+                            FontSize="34"
+                            HorizontalOptions="StartAndExpand"
+                            />
+                        <Label
+                            x:Name="earningsLabel"
+                            FontSize="36"
+                            HorizontalOptions="EndAndExpand"
+                            />
+                    </StackLayout>
+                    <Label
+                        x:Name="holdingsAmountLabel"
+                        FontSize="16"
+                        VerticalOptions="StartAndExpand"
+                        />
+                    <Label
+                        x:Name="holdingsValueLabel"
+                        FontSize="16"
+                        VerticalOptions="StartAndExpand"
+                        />
+                </StackLayout>
+                <!--  -->
+                <StackLayout
+                    Orientation="Horizontal"
+                    HorizontalOptions="FillAndExpand"
+                    >
+
+
+                </StackLayout>
+                <StackLayout
+                    Orientation="Horizontal"
+                    HorizontalOptions="CenterAndExpand"
+                    Margin="0,36,0,36"
+                    >
+                    <Button
+                        x:Name="buyButton"
+                        Text="Vétel"
+                        Command="{Binding ClickBuy}"
+                        />
+                    <Button
+                        x:Name="sellButton"
+                        Text="Eladás"
+                        Command="{Binding ClickSell}"
+                        />
+                </StackLayout>
+                <Label
+                    Text="Trazakciós történet"
+                    FontSize="16"
+                    />
+                <StackLayout
+                    x:Name="tranzactionHistory"
+                    >
+                    <!-- TRANZACTION HISTORY -->
+
+                </StackLayout>
+                <Label
+                    x:Name="historyDetailsLabel"
+                    FontSize="14"
+                    HorizontalOptions="Center"
+                    />
+            </StackLayout>
+        </ScrollView>
+    </RefreshView>
+
+</ContentPage>
