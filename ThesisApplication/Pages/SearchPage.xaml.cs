@@ -33,7 +33,7 @@ namespace ThesisApplication.Pages
 
             //
             SearchBar.TextChanged += userTyping;
-            DoSearch();
+            if (!EnvironmentVariable.debugMode) DoSearch();
         }
 
         /* On appearing && after filters set */
@@ -96,6 +96,9 @@ namespace ThesisApplication.Pages
                     x.exchange.Contains(SearchFilterPreferences.exchange) && 
                     x.currency.Contains(SearchFilterPreferences.currency) &&
                     types.Contains(x.instrument_type) &&
+                    // available
+                    x.valid_to == null &&
+                    // user input
                     x.search_string.Contains(userInput))
                 .Take(50)
                 .ToArray();
@@ -105,8 +108,11 @@ namespace ThesisApplication.Pages
             {
                 string upperLeftText = string.IsNullOrEmpty(n.name) ? n.symbol : n.name;
                 string upperRightText = Tools.Translate(n.instrument_type);
-                string lowerLeftText = $"{n.exchange} ({n.country})  -  {n.currency}";
                 if (upperLeftText.Length > 30) upperLeftText = upperLeftText.Substring(0, 27) + "...";
+                string lowerLeftText = n.instrument_type == "forex_pairs" || n.instrument_type == "cryptocurrencies"
+                    ? $"{n.currency_base} / {n.currency_quote}"
+                    : (n.instrument_type == "commodities" ? $"({n.symbol})" : $"{n.exchange} ({n.country})  -  {n.currency}");
+                
 
                 Tuple<Portfolio, Instrument> tuple = Tuple.Create(portfolio, n);
                 GestureRecognizer click = new TapGestureRecognizer() { Command = ClickItem, CommandParameter = tuple };
@@ -132,7 +138,7 @@ namespace ThesisApplication.Pages
         {
             (Portfolio p, Instrument i) = parameter as Tuple<Portfolio, Instrument>;
             Tranzaction[] t = tranzactions.Where(x => x.instrument_fk == i.id).ToArray();
-            await Navigation.PushAsync(new InstrumentViewPage(p, i ,t));
+            await Navigation.PushAsync(new InstrumentViewPage(p, i, t) { parentSearchPage = this });
         }
     }
 }

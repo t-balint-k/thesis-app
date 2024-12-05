@@ -1,8 +1,10 @@
 ﻿using Microcharts;
 using Newtonsoft.Json.Linq;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
@@ -17,6 +19,7 @@ namespace ThesisApplication.Pages
         public ICommand Refresh { get; }
         public ICommand ClickBuy { get; }
         public ICommand ClickSell { get; }
+        public SearchPage parentSearchPage { get; set; }
         private Portfolio portfolio { get; set; }
         private Instrument instrument { get; set; }
         private Tranzaction[] tranzactions { get; set; }
@@ -87,10 +90,12 @@ namespace ThesisApplication.Pages
         {
             // Listing history elements
             tranzactionHistory.Children.Clear();
-            foreach (Tranzaction n in tranzactions)
+            foreach (Tranzaction n in tranzactions.OrderByDescending(x => x.creation_time))
             {
-                string upperRightText = n.amount < 0 ? "-$" + Tools.PrettyPrint(n.price * n.amount * -1) : "+$" + Tools.PrettyPrint(n.price * n.amount);
-                string lowerRightText = $"{n.amount} {Tools.Translate(instrument.instrument_type)} {n.price} áron";
+                string upperRightText = instrument.instrument_type == "forex_pairs" || instrument.instrument_type == "cryptocurrencies"
+                    ? (n.amount < 0 ? $"- {Tools.PrettyPrint(n.price * n.amount * -1, 4)}" : $"+ {Tools.PrettyPrint(n.price * n.amount, 4)}")
+                    : (n.amount < 0 ? $"- {instrument.currency} {Tools.PrettyPrint(n.price * n.amount * -1)}" : $"+ {instrument.currency} {Tools.PrettyPrint(n.price * n.amount)}");
+                string lowerRightText = $"{Tools.PrettyPrint(n.amount)} {Tools.Translate(instrument.instrument_type)} {n.price} áron";
                 Color upperRightColor = n.amount < 0 ? Color.Red : Color.Green;
 
                 Frame f = Tools.PrettyFrame(n.creation_time, upperRightText, "", lowerRightText, Color.Black, upperRightColor);
@@ -101,7 +106,13 @@ namespace ThesisApplication.Pages
 
             // Instrument data
             companyLabel.Text = string.IsNullOrEmpty(instrument.name) ? instrument.symbol : instrument.name;
-            exchangeLabel.Text = $"{instrument.exchange} ({instrument.country})";
+            exchangeLabel.Text = instrument.instrument_type == "forex_pairs" || instrument.instrument_type == "cryptocurrencies"
+                ? $"{instrument.currency_base} / {instrument.currency_quote}"
+                : $"{instrument.exchange} ({instrument.country})";
+
+            // Holdings (amount)
+            holdings = tranzactions.Select(x => x.amount).Sum();
+            holdingsAmountLabel.Text = holdings > 0 ? $"portfolióban: {Tools.PrettyPrint(holdings)}" : "";
 
             // Acquering real time price
             string debug = $"https://api.twelvedata.com/price?apikey={EnvironmentVariable.APIKey}{instrument.getAPIArguments()}";
@@ -119,6 +130,7 @@ namespace ThesisApplication.Pages
                 sellButton.IsEnabled = false;
 
                 priceLabel.TextColor = Color.Red;
+
                 RefreshContainer.IsRefreshing = false;
                 return;
             }
@@ -126,18 +138,29 @@ namespace ThesisApplication.Pages
             // success
             else
             {
-                JObject json = JObject.Parse(response.message);
-                realtimePrice = double.Parse((string)json["price"]);
-                priceLabel.Text = $"${Tools.PrettyPrint(realtimePrice)}";
+                JObject json;
+                try
+                {
+                    json = JObject.Parse(response.message);
+                    realtimePrice = double.Parse((string)json["price"]);
+                }
+
+                // Depleting API credits
+                catch
+                {
+                    await DisplayAlert("Hiba!", "Ingyenes API keret kimerítve, próbáld meg később.", "Ok");
+                    RefreshContainer.IsRefreshing = false;
+                    return;
+                }
+
                 priceLabel.TextColor = Color.Black;
+                priceLabel.Text = instrument.instrument_type == "forex_pairs" || instrument.instrument_type == "cryptocurrencies"
+                    ? $"{Tools.PrettyPrint(realtimePrice, 4)}"
+                    : $"{instrument.currency} {Tools.PrettyPrint(realtimePrice)}";
 
                 buyButton.IsEnabled = true;
-                sellButton.IsEnabled = true;
+                sellButton.IsEnabled = holdings != 0;
             }
-
-            // Holdings (amount)
-            holdings = tranzactions.Select(x => x.amount).Sum();
-            holdingsAmountLabel.Text = holdings > 0 ? $"portfolióban: {Tools.PrettyPrint(holdings)}" : "";
 
             // Holdings (value)
             double currentInvestment = holdings * realtimePrice;
@@ -149,12 +172,12 @@ namespace ThesisApplication.Pages
             earningsLabel.Text = holdings > 0 ? d.ToString() + "%" : "";
             earningsLabel.TextColor = d >= 0 ? Color.Green : Color.Red;
 
-            //finish
+            // Finish
             DoDraw("nap");
             RefreshContainer.IsRefreshing = false;
         }
 
-        /* Drawing line chart && creating tranzaction history list */
+        /* Drawing line chart */
 
         private async void DoDraw(string step)
         {
@@ -172,14 +195,119 @@ namespace ThesisApplication.Pages
                 b.TextColor = Color.WhiteSmoke;
             }
 
+            // Instrument unavailable
+            if (priceLabel.TextColor == Color.Red)
+            {
+                await DisplayAlert("Hiba!", "Ez az eszköz nem elérhető.", "Ok");
+                return;
+            }
+
             // Line chart
-            // ....
+            ChartEntry[] current = new ChartEntry[0];
+            switch (step)
+            {
+                case "perc":
+                    if (entries_1min == null) entries_1min = await GetTimeSeries("1min", 60);
+                    current = entries_1min;
+                    break;
+                case "óra":
+                    if (entries_1hour == null) entries_1hour = await GetTimeSeries("1h", 24);
+                    current = entries_1hour;
+                    break;
+                case "nap":
+                    if (entries_1day == null) entries_1day = await GetTimeSeries("1day", 30);
+                    current = entries_1day;
+                    break;
+                case "hónap":
+                    if (entries_1month == null) entries_1month = await GetTimeSeries("1month", 12);
+                    current = entries_1month;
+                    break;
+            }
+
+            // Has errors
+            if (current.Length == 0) return;
+
+            // Math
+            int min = (int)Math.Floor(current.Select(x => x.Value).Min());
+            int max = (int)Math.Ceiling(current.Select(x => x.Value).Max());
+            int pedding = (int)Math.Round((max - min) * 0.1);
+
+            // The chart
+            if (min == 0 && max == 0)
+            {
+                await DisplayAlert("Hiba!", "Ennek az eszköznek nincs nincs árfolyam története.", "Ok");
+                buyButton.IsEnabled = false;
+                sellButton.IsEnabled = false;
+                return;
+            }
+
+            chartView.Chart = new LineChart()
+            {
+                Margin = 0,
+                LabelOrientation = Orientation.Vertical,
+                LabelTextSize = 24,
+                ValueLabelOrientation = Orientation.Horizontal,
+                LineMode = LineMode.Straight,
+                EnableYFadeOutGradient = true,
+
+                Entries = current,
+                MinValue = min - pedding,
+                MaxValue = max + pedding
+            };
+
+            // API call
+            async Task<ChartEntry[]> GetTimeSeries(string interval, int size)
+            {
+                JObject[] timeSeries;
+
+                // Http request
+                try
+                {
+                    EndpointResponse response = await NetHelper.SendRequest($"https://api.twelvedata.com/time_series?{instrument.getAPIArguments()}&interval={interval}&outputsize={size}&apikey={EnvironmentVariable.APIKey}");
+
+                    // fail
+                    if (!response.success)
+                    {
+                        await DisplayAlert("Hiba!", "Külső szolgáltató hiba lépett fel, próbáld meg később.", "Ok");
+                        return new ChartEntry[0];
+                    }
+
+                    // extracting the datapoints
+                    timeSeries = JObject.Parse(response.message)["values"].ToObject<JObject[]>();
+                }
+
+                catch
+                {
+                    await DisplayAlert("Hiba!", "A historikus adatok lekérdezésében hiba lépett fel, próbáld meg később.", "Ok");
+                    return new ChartEntry[0];
+                }
+
+                // Parsing response data
+                List<ChartEntry> entries = new List<ChartEntry>();
+                foreach (JObject n in timeSeries)
+                {
+                    // data point
+                    float f = float.Parse((string)n["close"]);
+                    ChartEntry e = new ChartEntry(f) { Label = "", Color = SKColor.Parse("#f5d86e") };
+                    entries.Add(e);
+                }
+
+                // Done
+                return entries.OrderBy(x => x.Label).ToArray();
+            }
         }
 
         /* Buying */
 
         private async void DoBuy()
         {
+            if (instrument.valid_to != null)
+            {
+                // Instrument retired
+                await DisplayAlert("Ez az eszköz kivezetésre került!", "", "Ok");
+                return;
+            }
+
             MakeTransaction(false);
         }
 
@@ -201,14 +329,14 @@ namespace ThesisApplication.Pages
             if (userInput == null) return;
 
             // Parse
-            if (!int.TryParse(userInput, out int parsed) || parsed <= 0 || (selling && holdings < parsed))
+            if (!double.TryParse(userInput, out double parsed) || parsed <= 0 || (selling && holdings < parsed))
             {
                 await DisplayAlert("Hiba!", "A bevitt mennyiség nem megfelelő.", "Ok");
                 return;
             }
 
             // Call
-            double amount = selling ? parsed * +1 : parsed;
+            double amount = selling ? parsed * -1 : parsed;
             string[] keys = { "portfolio", "instrument", "amount", "price" };
             string[] values = { portfolio.id.ToString(), instrument.id.ToString(), amount.ToString(), realtimePrice.ToString() };
             EndpointResponse response = await NetHelper.SendRequest("TranzactionMake", RequestVariable.FromArray(keys, values));
@@ -216,12 +344,14 @@ namespace ThesisApplication.Pages
             // fail
             if (!response.success)
             {
-                // ...
+                string msg = response.message == "Már létezik!" ? "Kerettúllépés!" : response.message;
+                await DisplayAlert("Hiba!", msg, "Ok");
                 return;
             }
 
             // success
-            // portfolio page redirect
+            if (parentSearchPage != null) Navigation.RemovePage(parentSearchPage);
+            await Navigation.PopAsync();
         }
     }
 }

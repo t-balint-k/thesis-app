@@ -29,9 +29,10 @@ namespace ThesisApplication
         }
 
         // Pretty print label content
-        public static string PrettyPrint(double d)
+        public static string PrettyPrint(double d, int decimals = 2)
         {
-            return d.ToString("#,0.00").Replace(",", " ").Replace(".", ",");
+            string format = "#,0." + new string('0', decimals);
+            return d.ToString(format).Replace(",", " ").Replace(".", ",");
         }
 
         // Translating instrument names
@@ -78,7 +79,7 @@ namespace ThesisApplication
                 TextColor = Color.DimGray,
                 FontAttributes = FontAttributes.None,
                 FontSize = 12,
-                Margin = new Thickness(0, 0, 0, 0)
+                Margin = new Thickness(12, 0, 0, 3)
             };
 
             Label lowerRightLabel = new Label()
@@ -97,6 +98,7 @@ namespace ThesisApplication
 
             AbsoluteLayout.SetLayoutFlags(upperLeftLabel,  AbsoluteLayoutFlags.PositionProportional);
             AbsoluteLayout.SetLayoutFlags(upperRightLabel, AbsoluteLayoutFlags.PositionProportional);
+            AbsoluteLayout.SetLayoutFlags(lowerLeftLabel,  AbsoluteLayoutFlags.PositionProportional);
             AbsoluteLayout.SetLayoutFlags(lowerRightLabel, AbsoluteLayoutFlags.PositionProportional);
 
             // Frame entity
@@ -105,7 +107,7 @@ namespace ThesisApplication
                 HasShadow = true,
                 Padding = 0,
                 HeightRequest = 64,
-                Content = new AbsoluteLayout() { Children = { upperLeftLabel, upperRightLabel, lowerRightLabel } },
+                Content = new AbsoluteLayout() { Children = { upperLeftLabel, upperRightLabel, lowerLeftLabel, lowerRightLabel } },
                 GestureRecognizers = { gesture }
             };
         }

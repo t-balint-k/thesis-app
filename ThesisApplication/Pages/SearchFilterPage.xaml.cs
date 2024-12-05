@@ -25,9 +25,6 @@ namespace ThesisApplication.Pages
             countryPicker.SelectedItem = SearchFilterPreferences.country == "" ? "Mindegyik" : SearchFilterPreferences.country;
 
             // Exchanges
-            string[] exchanges = DbHelper.Context.Table<Exchange>().Select(x => x.name).Distinct().ToArray();
-            exchangePicker.Items.Add("Mindegyik");
-            foreach (string n in exchanges) exchangePicker.Items.Add(n);
             exchangePicker.SelectedIndexChanged += exchangeChanged;
             exchangePicker.SelectedItem = SearchFilterPreferences.exchange == "" ? "Mindegyik" : SearchFilterPreferences.exchange;
 

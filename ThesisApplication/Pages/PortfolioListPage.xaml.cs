@@ -80,7 +80,7 @@ namespace ThesisApplication.Pages
             foreach (Portfolio n in portfolios)
             {
                 GestureRecognizer click = new TapGestureRecognizer() { Command = ClickItem, CommandParameter = n };
-                Frame f = Tools.PrettyFrame(n.name, n.pool.ToString(), "", n.creation_time, Color.Black, Color.DimGray, click);
+                Frame f = Tools.PrettyFrame(n.name, $"{n.currency} {n.pool}", "", n.creation_time, Color.Black, Color.DimGray, click);
                 PortfolioList.Children.Add(f);
             }
 
