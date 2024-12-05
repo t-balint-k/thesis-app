@@ -33,6 +33,7 @@ namespace ThesisApplication.Pages
 
         private async void DBInit()
         {
+            infoMessage = "Törzsadatok letöltése...";
             string init = await DbHelper.DatabaseInit();
 
             if (init != "")
@@ -85,6 +86,7 @@ namespace ThesisApplication.Pages
             }
 
             // Done
+            infoMessage = "";
             RefreshContainer.IsRefreshing = false;
         }
 

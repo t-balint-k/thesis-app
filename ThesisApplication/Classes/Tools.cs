@@ -120,7 +120,7 @@ namespace ThesisApplication
         // Session
         public static string APIKey;
         public static string userid;
-        public static bool debugMode = true;
+        public static bool debugMode = false;
 
         // Webserver
         public static string webIP = "172.213.140.243";
