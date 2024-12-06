@@ -93,8 +93,8 @@ namespace ThesisApplication.Pages
             foreach (Tranzaction n in tranzactions.OrderByDescending(x => x.creation_time))
             {
                 string upperRightText = instrument.instrument_type == "forex_pairs" || instrument.instrument_type == "cryptocurrencies"
-                    ? (n.amount < 0 ? $"- {Tools.PrettyPrint(n.price * n.amount * -1, 4)}" : $"+ {Tools.PrettyPrint(n.price * n.amount, 4)}")
-                    : (n.amount < 0 ? $"- {instrument.currency} {Tools.PrettyPrint(n.price * n.amount * -1)}" : $"+ {instrument.currency} {Tools.PrettyPrint(n.price * n.amount)}");
+                    ? (n.amount < 0 ? $"- {portfolio.currency} {Tools.PrettyPrint(n.price * n.amount * n.rate * -1, 4)}" : $"+ {portfolio.currency} {Tools.PrettyPrint(n.price * n.amount * n.rate, 4)}")
+                    : (n.amount < 0 ? $"- {portfolio.currency} {Tools.PrettyPrint(n.price * n.amount * n.rate * -1)}"    : $"+ {portfolio.currency} {Tools.PrettyPrint(n.price * n.amount * n.rate)}");
                 string lowerRightText = $"{Tools.PrettyPrint(n.amount)} {Tools.Translate(instrument.instrument_type)} {n.price} áron";
                 Color upperRightColor = n.amount < 0 ? Color.Red : Color.Green;
 
@@ -283,18 +283,23 @@ namespace ThesisApplication.Pages
                 }
 
                 // Parsing response data
+                List<dateFloatPair> values = new List<dateFloatPair>();
+                foreach (JObject n in timeSeries) values.Add(new dateFloatPair() { datetime = (string)n["datetime"], closevalue = float.Parse((string)n["close"]) });
+
                 List<ChartEntry> entries = new List<ChartEntry>();
-                foreach (JObject n in timeSeries)
-                {
-                    // data point
-                    float f = float.Parse((string)n["close"]);
-                    ChartEntry e = new ChartEntry(f) { Label = "", Color = SKColor.Parse("#f5d86e") };
-                    entries.Add(e);
-                }
+                foreach (dateFloatPair n in values.OrderBy(x => x.datetime)) entries.Add(new ChartEntry(n.closevalue) { Label = "", Color = SKColor.Parse("#f5d86e") });
 
                 // Done
                 return entries.OrderBy(x => x.Label).ToArray();
             }
+        }
+
+        /* Chart entry datastructure */
+
+        private class dateFloatPair
+        {
+            public string datetime;
+            public float closevalue;
         }
 
         /* Buying */
@@ -335,10 +340,18 @@ namespace ThesisApplication.Pages
                 return;
             }
 
+            // Currency conversion rate
+            double rate = await CurrencyConversionRate();
+            if (rate == -1)
+            {
+                await DisplayAlert("Figyelem!", "A devizakonverzió a portolió pénzneme és az instrumentum pénzneme között meghiusult.", "Ok");
+                return;
+            }
+
             // Call
             double amount = selling ? parsed * -1 : parsed;
-            string[] keys = { "portfolio", "instrument", "amount", "price" };
-            string[] values = { portfolio.id.ToString(), instrument.id.ToString(), amount.ToString(), realtimePrice.ToString() };
+            string[] keys = { "portfolio", "instrument", "amount", "price", "rate" };
+            string[] values = { portfolio.id.ToString(), instrument.id.ToString(), amount.ToString(), realtimePrice.ToString(), rate.ToString() };
             EndpointResponse response = await NetHelper.SendRequest("TranzactionMake", RequestVariable.FromArray(keys, values));
 
             // fail
@@ -352,6 +365,32 @@ namespace ThesisApplication.Pages
             // success
             if (parentSearchPage != null) Navigation.RemovePage(parentSearchPage);
             await Navigation.PopAsync();
+        }
+
+        /* Currency conversion */
+
+        private async Task<double> CurrencyConversionRate()
+        {
+            string convertTo = portfolio.currency;
+            string convertFrom = (instrument.instrument_type == "forex_pairs" || instrument.instrument_type == "cryptocurrencies")
+                ? instrument.symbol.Split('/')[1]
+                : instrument.currency;
+
+            // Nothing to do
+            if (convertFrom == convertTo) return 1;
+
+            // Conversion needed
+            EndpointResponse response = await NetHelper.SendRequest($"https://api.twelvedata.com/exchange_rate?symbol={convertFrom}/{convertTo}&apikey={EnvironmentVariable.APIKey}");
+            if (!response.success) return -1;
+
+            // Done
+            double d = -1;
+            try
+            {
+                JObject json = JObject.Parse(response.message);
+                d = double.Parse((string)json["rate"]);
+            } catch { }
+            return d;
         }
     }
 }

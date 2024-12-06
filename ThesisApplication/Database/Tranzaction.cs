@@ -7,5 +7,6 @@
         public string creation_time;
         public double amount;
         public double price;
+        public double rate;
     }
 }
